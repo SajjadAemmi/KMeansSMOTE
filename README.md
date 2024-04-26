@@ -22,6 +22,10 @@ K-means SMOTE works in three steps:
 This project is a python implementation of k-means SMOTE. It is
 compatible with the scikit-learn-contrib project [imbalanced-learn](https://github.com/scikit-learn-contrib/imbalanced-learn).
 
+Before | After
+--- | ---
+![Before](./assets/before.png) | ![After](./assets/after.png)
+
 ## Installation
 
 ```bash
