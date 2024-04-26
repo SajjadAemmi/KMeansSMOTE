@@ -1,8 +1,5 @@
 """K-Means SMOTE oversampling method for class-imbalanced data"""
 
-# Authors: Felix Last
-# License: MIT
-
 import warnings
 import math
 import copy
@@ -89,32 +86,6 @@ class KMeansSMOTE(BaseOverSampler):
     n_jobs : int, optional (default=1)
         The number of threads to open if possible. This parameter will be copied to ``kmeans_args`` and
         ``smote_args`` if not explicitly passed there. Note: ``MiniBatchKMeans`` does not accept ``n_jobs``.
-
-    Examples
-    --------
-
-    >>> import numpy as np
-    >>> from imblearn.datasets import fetch_datasets
-    >>> from kmeans_smote import KMeansSMOTE
-    >>>
-    >>> datasets = fetch_datasets(filter_data=['oil'])
-    >>> X, y = datasets['oil']['data'], datasets['oil']['target']
-    >>>
-    >>> [print('Class {} has {} instances'.format(label, count))
-    ...  for label, count in zip(*np.unique(y, return_counts=True))]
-    >>>
-    >>> kmeans_smote = KMeansSMOTE(
-    ...     kmeans_args={
-    ...         'n_clusters': 100
-    ...     },
-    ...     smote_args={
-    ...        'k_neighbors': 10
-    ...     }
-    ... )
-    >>> X_resampled, y_resampled = kmeans_smote.fit_sample(X, y)
-    >>>
-    >>> [print('Class {} has {} instances after oversampling'.format(label, count))
-    ...  for label, count in zip(*np.unique(y_resampled, return_counts=True))]
     """
 
     def __init__(self,
@@ -210,10 +181,10 @@ class KMeansSMOTE(BaseOverSampler):
             if (imbalance_ratio < imbalance_ratio_threshold) and (minority_count > 1):
                 distances = euclidean_distances(cluster[mask])
                 non_diagonal_distances = distances[
-                    ~np.eye(distances.shape[0], dtype=np.bool)
+                    ~np.eye(distances.shape[0], dtype=bool)
                 ]
                 average_minority_distance = np.mean( non_diagonal_distances )
-                if average_minority_distance is 0: average_minority_distance = 1e-1 # to avoid division by 0
+                if average_minority_distance == 0: average_minority_distance = 1e-1 # to avoid division by 0
                 density_factor = minority_count / (average_minority_distance ** self.density_power)
                 sparsity_factors[i] = 1 / density_factor
 
@@ -309,7 +280,7 @@ class KMeansSMOTE(BaseOverSampler):
                             # ignore warnings about minority class getting bigger than majority class
                             # since this would only be true within this cluster
                             warnings.filterwarnings(action='ignore', category=UserWarning, message=r'After over-sampling, the number of samples \(.*\) in class .* will be larger than the number of samples in the majority class \(class #.* \-\> .*\)')
-                            cluster_resampled_X, cluster_resampled_y = oversampler.fit_sample(cluster_X, cluster_y)
+                            cluster_resampled_X, cluster_resampled_y = oversampler.fit_resample(cluster_X, cluster_y)
 
                         if remove_index > -1:
                             # since SMOTE's results are ordered the same way as the data passed into it,
@@ -359,11 +330,3 @@ class KMeansSMOTE(BaseOverSampler):
                     self.smote_args['random_state'] = self.random_state
             if 'random_state' not in self.kmeans_args:
                 self.kmeans_args['random_state'] = self.random_state
-
-        # copy n_jobs to sub-algorithms
-        if self.n_jobs is not None:
-            if 'n_jobs' not in self.smote_args:
-                    self.smote_args['n_jobs'] = self.n_jobs
-            if 'n_jobs' not in self.kmeans_args:
-                if not self.use_minibatch_kmeans:
-                    self.kmeans_args['n_jobs'] = self.n_jobs
